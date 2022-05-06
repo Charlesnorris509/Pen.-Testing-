@@ -45,3 +45,12 @@ waybackurls $1 | grep '=' | qsreplace '"><script>alert(1)</script>' | while read
 
 #Finding OpenRedirects
 export LHOST="http://localhost"; gau $1| sort u | httpx -silent| gf redirect| qsreplace "$LHOST" | xargs -I % -P 25 sh -c 'curl -Is "%" 2>&1 |grep -q "Location: $LHOST" && echo "!Vulns %"'
+
+#Extracting Ip Addresses from collected subdomains from reconnaissance
+#Assuming a list of subdomains list names subs.txt
+#Saving the content of the scan into ips.txt file
+for i in ($cat subs.txt); do nslookup $1| grep "Address" |awk '{print $2}' | sed -n 2p;echo; done > ips.txt
+
+#Sorting and Eliminating Duplicates from subdomains files from multiple recon tools
+#Assuming three files from three different tools (Subfinder, amass,knock.py)
+sort -u subfinder.txt amass.txt knock.txt > all_subs.txt
